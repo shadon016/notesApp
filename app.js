@@ -19,21 +19,22 @@ app.use(
 );
 app.use(morgan("dev"));
 app.use(express.json());
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100, // 100 request
-});
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL, // * দেবেন না
-    credentials: true,
-  }),
-);
+// app.js
+app.set("trust proxy", 1); // এটা যোগ করুন
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10, // Auth route-এ মাত্র 10 request
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 app.use(mongoSanitize());
