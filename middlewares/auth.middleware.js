@@ -1,4 +1,5 @@
-// Bearer token only — cookie নেই
+import { verifyAccessToken } from "../utils/jwt.js";
+
 export const authMiddleware = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
