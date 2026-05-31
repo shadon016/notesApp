@@ -4,7 +4,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-} from "../utils/jwt.js";
+} from "../utils/token.js";
 import redis from "../utils/redis.js";
 
 export const login = async (req, res, next) => {
