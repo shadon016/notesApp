@@ -7,9 +7,12 @@ import {
   verifyRefreshToken,
 } from "../utils/token.js";
 
-// ========================
-// REGISTER
-// ========================
+const cookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+};
+
 export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -38,9 +41,6 @@ export const register = async (req, res, next) => {
   }
 };
 
-// ========================
-// LOGIN
-// ========================
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -68,12 +68,20 @@ export const login = async (req, res, next) => {
       EX: 60 * 60 * 24 * 7,
     });
 
+    res.cookie("access_token", accessToken, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.cookie("refresh_token", refreshToken, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 24 * 7 * 1000,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
       data: {
-        accessToken,
-        refreshToken,
         user: {
           id: user._id,
           name: user.name,
@@ -87,12 +95,9 @@ export const login = async (req, res, next) => {
   }
 };
 
-// ========================
-// REFRESH
-// ========================
 export const refresh = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refresh_token;
 
     if (!refreshToken) {
       return res.status(401).json({
@@ -102,8 +107,8 @@ export const refresh = async (req, res, next) => {
     }
 
     const decoded = verifyRefreshToken(refreshToken);
-
     const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+
     if (storedToken !== refreshToken) {
       return res.status(401).json({
         success: false,
@@ -116,21 +121,26 @@ export const refresh = async (req, res, next) => {
       role: decoded.role,
     });
 
+    res.cookie("access_token", accessToken, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 1000,
+    });
+
     return res.status(200).json({
       success: true,
-      data: { accessToken },
+      message: "Token refreshed",
     });
   } catch (err) {
     next(err);
   }
 };
 
-// ========================
-// LOGOUT
-// ========================
 export const logout = async (req, res, next) => {
   try {
     await redis.del(`refresh_token:${req.user.userId}`);
+
+    res.clearCookie("access_token", cookieOptions);
+    res.clearCookie("refresh_token", cookieOptions);
 
     return res.status(200).json({
       success: true,
