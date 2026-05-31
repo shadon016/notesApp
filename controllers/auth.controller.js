@@ -5,7 +5,8 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/token.js";
-import redis from "../utils/redis.js";
+
+import redis from "../config/redis.js";
 
 export const login = async (req, res, next) => {
   try {
